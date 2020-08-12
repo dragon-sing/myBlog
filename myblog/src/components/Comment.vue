@@ -1,131 +1,114 @@
 <template>
-  <el-row v-loading="loading">
-    <el-col :span="24">
-      <div style="text-align: left;">
-        <el-button type="text" icon="el-icon-back" @click="goBack" style="padding-bottom: 0px;">返回</el-button>
-      </div>
-    </el-col>
-    <el-col :span="24">
-      <div>
-        <div><h1 style="margin-top: 0px;margin-bottom: 0px">{{article.title}}</h1></div>
-        <div style="width: 100%;margin-top: 5px;display: flex;justify-content: flex-end;align-items: center">
-          <div style="display: inline; color: #20a0ff;margin-left: 50px;margin-right:20px;font-size: 12px;">
-            {{article.nickname}}
-          </div>
-          <span style="color: #20a0ff;margin-right:20px;font-size: 12px;">浏览 {{article.pageView==null?0:article.pageView}}</span>
-          <span style="color: #20a0ff;margin-right:20px;font-size: 12px;"> {{article.editTime | formatDateTime}}</span>
-          <el-tag type="success" v-for="(item,index) in article.tags" :key="index" size="small"
-                  style="margin-left: 8px">{{item.tagName}}
-          </el-tag>
-          <span style="margin:0px 50px 0px 0px"></span>
-        </div>
-      </div>
-    </el-col>
-    <el-col>
-      <div style="text-align: left" v-html="article.htmlContent">
-      </div>
-    </el-col>
-    <h4>评论区</h4>
   <div class="container">
-    <div class="comment" v-for="item in commentData">
+    <div class="comment" v-for="item in comments">
       <div class="info">
         <div class="right">
-          <div class="name">{{item.username}} : {{item.content}}</div>
-          <div class="date" >{{item.publishDate | formatDate}}</div>
+          <div class="name">{{item.fromName}}</div>
+          <div class="date">{{item.publishDate | formatDate}}</div>
         </div>
       </div>
-
-
+      <div class="content">{{item.content}}</div>
+      <div class="control">
+        <span class="comment-reply" @click="showCommentInput(item)">
+          <i class="iconfont icon-comment"></i>
+          <span>回复</span>
+        </span>
+      </div>
+      <div class="reply">
+        <div class="item" v-for="reply in item.reply">
+          <div class="reply-content">
+            <span class="from-name">{{reply.fromName}}</span><span>: </span>
+            <span class="to-name">@{{reply.toName}}</span>
+            <span>{{reply.content}}</span>
+          </div>
+          <div class="reply-bottom">
+            <span>{{reply.date}}</span>
+            <span class="reply-text" @click="showCommentInput(item, reply)">
+              <i class="iconfont icon-comment"></i>
+              <span>回复</span>
+            </span>
+          </div>
+        </div>
+        <div class="write-reply" v-if="item.reply.length > 0" @click="showCommentInput(item)">
+          <i class="el-icon-edit"></i>
+          <span class="add-comment">添加新评论</span>
+        </div>
+        <transition name="fade">
+          <div class="input-wrapper" v-if="showItemId === item.id">
+            <el-input class="gray-bg-input"
+                      v-model="inputComment"
+                      type="textarea"
+                      :rows="3"
+                      autofocus
+                      placeholder="写下你的评论">
+            </el-input>
+            <div class="btn-control">
+              <span class="cancel" @click="cancel">取消</span>
+              <el-button class="btn" type="success" round @click="commitComment">确定</el-button>
+            </div>
+          </div>
+        </transition>
+      </div>
     </div>
-    <transition name="fade">
-      <div class="input-wrapper" >
-        <el-input class="gray-bg-input"
-                  v-model="inputComment"
-                  type="textarea"
-                  :rows="3"
-                  autofocus
-                  placeholder="写下你的评论">
-        </el-input>
-        <div class="btn-control">
-          <span class="cancel" @click="">取消</span>
-          <el-button class="btn" type="success" @click="commitComment">确定</el-button>
-        </div>
-      </div>
-    </transition>
   </div>
-  </el-row>
-
 </template>
+
+
 <script>
-  import {getRequest, postRequest} from '../utils/api'
-  import  Comment from '@/components/Comment'
-  import {isNotNullORBlank} from "../utils/utils";
 
-  export default{
-    methods: {
-      goBack(){
-        this.$router.go(-1);
-      },
-      commitComment(){
-        let _this = this;
-        var aid = this.$route.query.aid;
-        if (!(isNotNullORBlank(_this.inputComment, ))) {
-          this.$message({type: 'error', message: '评论不能为空!'});
-          return;
-        }
-        postRequest("/comment/", {
-          aid: _this.article.id,
-          content:_this.inputComment,
-        }).then(resp=> {
-          if (resp.status == 200 && resp.data.status == 'success') {
-            location. reload();
-            this.$router.go(0);
-            }
+  import Vue from 'vue'
 
-        }, resp=> {
-          _this.loading = false;
-          _this.$message({type: 'error', message: '评论失败!'});
-        })
-      },
+  export default {
+    props: {
+      comments: {
+        type: Array,
+        required: true
       }
-    ,
-    mounted: function () {
-      var aid = this.$route.query.aid;
-      this.activeName = this.$route.query.an
-      var _this = this;
-      this.loading = true;
-      getRequest("/article/" + aid).then(resp=> {
-        if (resp.status == 200) {
-          _this.article = resp.data;
-        }
-        _this.loading = false;
-      }, resp=> {
-        _this.loading = false;
-        _this.$message({type: 'error', message: '页面加载失败!'});
-      });
-      getRequest("/");
-      getRequest("/comment/"+aid).then(resp=> {
-        if(resp.status == 200){
-          _this.commentData = resp.data;
-        }}, resp=> {
-          _this.$message({type: 'error', message: '页面加载失败!'})
-        }
-      );
     },
-    data(){
+    components: {},
+    data() {
       return {
-        article: {},
-        loading: false,
-        activeName: '',
-        commentData:[],
-        inputComment:''
+        inputComment: '',
+        showItemId: ''
       }
     },
-    components:{
-       'comment':Comment
+    computed: {},
+    methods: {
+
+      /**
+       * 点击取消按钮
+       */
+      cancel() {
+        this.showItemId = ''
+      },
+
+      /**
+       * 提交评论
+       */
+      commitComment() {
+
+      },
+
+      /**
+       * 点击评论按钮显示输入框
+       * item: 当前大评论
+       * reply: 当前回复的评论
+       */
+      showCommentInput(item, reply) {
+        if (reply) {
+          this.inputComment = "@" + reply.fromName + " "
+        } else {
+          this.inputComment = ''
+        }
+        this.showItemId = item.id
+      }
+    },
+    created() {
+      console.log(this.comments)
     }
   }
 </script>
+
 <style scoped lang="scss">
   $color-main: #409EFF;
   $color-success: #67C23A;
@@ -155,7 +138,7 @@
       border-bottom: 1px solid $border-fourth;
       .info {
         display: flex;
-        /*align-items: center;*/
+        align-items: center;
         .avatar {
           border-radius: 50%;
         }
@@ -179,7 +162,7 @@
         font-size: 16px;
         color: $text-main;
         line-height: 20px;
-        /*padding: 10px 0;*/
+        padding: 10px 0;
       }
       .control {
         display: flex;

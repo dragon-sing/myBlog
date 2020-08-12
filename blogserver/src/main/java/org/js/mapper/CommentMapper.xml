@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.js.mapper.CommentMapper">
+
+    <select id="getCommentByArticleId" resultType="org.js.bean.Comment">
+        SELECT c.aid,c.content,c.publishDate,c.uid,u.username FROM  comments c,user u where u.id = c.uid and aid = #{aid} order by publishDate
+    </select>
+
+    <insert id="addComment" parameterType="org.js.bean.Comment">
+        INSERT INTO comments SET aid=#{aid},content=#{content},publishDate=#{publishDate},parentId=#{parentId},uid=#{uid}
+    </insert>
+</mapper>
